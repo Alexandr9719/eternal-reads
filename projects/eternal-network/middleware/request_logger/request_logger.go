@@ -1,10 +1,10 @@
 package request_logger
 
 import (
+	"eternal_network/middleware/request_id"
+	"eternal_network/pkg/logger"
 	"net/http"
 	"time"
-
-	"eternal_network/packages/logger"
 )
 
 func LoggingMiddleware(next http.Handler) http.Handler {
@@ -17,6 +17,12 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		endTime := time.Now()
 		duration := endTime.Sub(startTime)
 
-		logger.InfoLogger.Printf("[%s] %s %s - %s", r.Method, r.URL.Path, r.RemoteAddr, duration)
+		requestId, ok := r.Context().Value(request_id.RequestID).(string)
+
+		if !ok {
+			logger.Warn("RequestID is missed in context")
+		}
+
+		logger.Infof("[%s] [%v] %s %s - %s", r.Method, requestId, r.URL.Path, r.RemoteAddr, duration)
 	})
 }
